@@ -283,7 +283,7 @@ def acq_max_scipy(new_lb_norm, new_ub_norm, model, tolerance, maxiter_EI, dim):
 
 
 # function to update the design space, decelerating expansion, with controller E.
-def expand_space(lowest, lower_bound, upper_bound, input_dim, expand_count, E = 16):
+def expand_space(lowest, lower_bound, upper_bound, input_dim, expand_count, E = 11):
     
     mid_points = (lower_bound + upper_bound) * 0.5
     

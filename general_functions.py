@@ -223,29 +223,30 @@ def pairplot(new_X):
     plt.savefig(fname = "pairplot of the design variables")
     
     
-def run_abaqus(param1, param2, param3, param4, param5, param6, abaqus_script):
-    # Create the command to run Abaqus with a Python script
-    command = f"abaqus cae noGUI={abaqus_script} -- {param1} {param2} {param3} {param4} {param5} {param6}"
+def run_abaqus(param1, param2, param3, param4, param5, param6, directory, inp_file_path, job_name, abaqus_script):
+    command = f"abaqus cae noGUI={abaqus_script}"
+    parameters = f'{param1}, {param2}, {param3}, {param4}, {param5}, {param6}, {directory}, {inp_file_path}, {job_name}'
+    os.environ['ABAQUS_PARAMS'] = parameters
 
     # Use subprocess to call the command
-    process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ, bufsize = 0)
+    stdout, stderr = process.communicate()
 
-    if process.returncode != 0:
-        print("Error running Abaqus:")
-        print(process.stderr.decode())
-    else:
-        print("Abaqus ran successfully:")
-        print(process.stdout.decode()) 
+    # Print the output and error to the console
+    print(stdout.decode())
+    if stderr:
+        print("Error:")
+        print(stderr.decode())
         
         
         
-def run_abaqus_locally(param1, param2, param3, param4, param5, param6, abaqus_script):
+def run_abaqus_locally(param1, param2, param3, param4, param5, param6, directory, inp_file_path, job_name, abaqus_script):
     
     # define the abaqus bat file path
     abaqus_cmd = f'C:\\SIMULIA\\Commands\\abaqus.bat'
     
     # create environment parameters. pass parameter values to it.
-    parameters = f'{param1}, {param2}, {param3}, {param4}, {param5}, {param6}'
+    parameters = f'{param1}, {param2}, {param3}, {param4}, {param5}, {param6}, {directory}, {inp_file_path}, {job_name}'
     os.environ['ABAQUS_PARAMS'] = parameters
     
     # Create the command to run Abaqus with a Python script
@@ -258,11 +259,9 @@ def run_abaqus_locally(param1, param2, param3, param4, param5, param6, abaqus_sc
     # Wait for the process to complete and get the output and error
     stdout, stderr = process.communicate()
 
-    
     # Print the output and error to the console
     print(stdout.decode())
     if stderr:
         print("Error:")
         print(stderr.decode())
-        
         

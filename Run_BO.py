@@ -14,12 +14,13 @@ import matplotlib.pyplot as plt
 from BO_functions import *
 from general_functions import *
 import pickle
+import pathlib
 
 time_start = time.time()
 
 #Define some parameters
 input_dim = 5
-ini_popu_size = 50  # initial population size
+ini_popu_size = 50
 tolerance_BO = 0.001
 max_iter = 150
 stop_num = 150
@@ -34,15 +35,17 @@ lowest = [1, 1, 0.1, 0.1, 0.1]
 maxiter_EI = 2000
 tolerance_optimizer = 1e-4  # Convergence tolerance for L-BFGS-B
 
-# Specify the pickle filename
+# Specify the filenames
 pickle_filename = "valid_plateau_ini50_ave.pkl"
-
-db_directory = r"C:\Users\tangmingjian\Desktop\Nacre Inverse Design\DB_5param_small_50_database\DB_5param_small_50_database"
+tar_txt_name = 'target_data.txt'
+db_directory = "DB_5param_small_50_database"
 db_csv_name = "DB_5param_small_50.csv"
 db_csv_path = os.path.join(db_directory, db_csv_name)
-local_directory = r"C:\Users\tangmingjian\Desktop\Nacre Inverse Design\BO code"
-
-abaqus_script = "Nacre_2D_cae_txt.py"
+local_directory = str(pathlib.Path().resolve())
+abaqus_script = "Nacre_2D_inp.py"
+inp_file_name = 'Nacre_model.inp'
+inp_file_path = os.path.join(local_directory, inp_file_name)
+job_name = 'Nacre_model'
 
 # Information needs to be stored
 new_curves = []
@@ -53,9 +56,7 @@ new_X = []
 
 # 1. Define Objective function
 # Create the target curve. 
-tar_txt_name = 'target_data.txt'
 tar_curve = extract_curve_txt(local_directory, tar_txt_name)
-
 
 # 2. Surrogate model with GPflow
 df = pd.read_csv(db_csv_path, header=None)
@@ -103,10 +104,10 @@ model = Train_GPR(gp_input_stdd, gp_output_stdd, input_dim)
 stop_count = 0
 expand_count = 0
 optimal_Y_pre = 5
-lower_bound = np.array([40.0, 40, 4, 4, 10])
-upper_bound = np.array([120.0, 120, 8, 8, 40])
-lbs = np.array([40.0, 40, 4, 4, 10])
-ubs = np.array([120.0, 120, 8, 8, 40])
+lower_bound = np.array([40, 40, 4, 4, 10])
+upper_bound = np.array([120, 120, 8, 8, 40])
+lbs = np.array([40, 40, 4, 4, 10])
+ubs = np.array([120, 120, 8, 8, 40])
 
 # update optimization iterations
 for iteration in range(1, max_iter+1):
@@ -165,13 +166,14 @@ for iteration in range(1, max_iter+1):
     new_X.append(X_real_next)
     print('the new design point is', X_real_next)
     
-    job_name = 'Nacre_2D'
+    job_name = 'Nacre_model'
     txt_name = job_name + '_ite' + str(iteration) + '.txt'
     txt_path = os.path.join(local_directory, txt_name)
     
     # pass next sample values to ABAQUS scripts, and run ABAQUS
     try:
-        run_abaqus_locally(iteration, X_real_next[0], X_real_next[1], X_real_next[2], X_real_next[3], X_real_next[4], abaqus_script)
+        run_abaqus_locally(iteration, X_real_next[0], X_real_next[1], X_real_next[2], X_real_next[3], X_real_next[4], 
+                           local_directory, inp_file_path, job_name, abaqus_script)
         current_curve = extract_curve_txt(local_directory, txt_name)
         new_curves.append(current_curve)
         # Evaluate objective function at the new design point
@@ -211,7 +213,6 @@ plot_best_curves(new_curves[best_index], tar_curve, best_index)
 # plot the convergence plot
 plt.figure()
 plt.plot(objectives)
-# plt.title("objective of the new design in each iteration")
 plt.xlabel('iterations')
 plt.ylabel('new objective')
 plt.savefig(fname="objective of the new design")
